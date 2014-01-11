@@ -7,7 +7,9 @@
     <uses-sdk
         android:minSdkVersion="8"
         android:targetSdkVersion="19" />
-<uses-permission android:name="android.permission.INTERNET"/>
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
@@ -22,12 +24,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        
+
         <service
-  android:name="com.octo.android.robospice.JacksonSpringAndroidSpiceService"
-  android:exported="false" />
+            android:name="com.octo.android.robospice.JacksonSpringAndroidSpiceService"
+            android:exported="false" />
+
+        <activity
+            android:name="se.kth.ollecarjhellstr.MobileClient.UsersActivity"
+            android:label="@string/title_activity_users" >
+        </activity>
+        <activity
+            android:name="se.kth.ollecarjhellstr.MobileClient.ChatActivity"
+            android:label="@string/title_activity_chat" >
+        </activity>
     </application>
 
-    
-    
 </manifest>

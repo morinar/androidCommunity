@@ -7,5 +7,10 @@
     <string name="login">Login</string>
     <string name="password">Password</string>
     <string name="username">Username</string>
+    <string name="title_activity_users">UsersActivity</string>
+    <string name="update">Update</string>
+    <string name="title_activity_chat">ChatActivity</string>
+    <string name="writeusers">Write Here</string>
+    <string name="send">Send</string>
 
 </resources>
