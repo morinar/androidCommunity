@@ -66,10 +66,10 @@ int id loginButton 0x7f05000e
 int id none 0x7f050000
 int id normal 0x7f050001
 int id password 0x7f05000d
-int id recieverList 0x7f050008
+int id recieverList 0x7f050007
 int id satellite 0x7f050002
 int id sendButton 0x7f05000b
-int id sendList 0x7f050007
+int id sendList 0x7f050008
 int id terrain 0x7f050003
 int id textWriteId 0x7f050009
 int id updateButton 0x7f050010

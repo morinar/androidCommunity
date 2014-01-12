@@ -50,8 +50,16 @@ public class ChatActivity extends Activity {
 	private ArrayAdapter<String> recieverAdapter;
 
 	public static ChatActivity getInstance() {
-        return instance;
+		if(instance.hasWindowFocus()){
+			return instance;
+		}
+		return null;
      }
+	
+	public void updateMessages(){
+		getMyMessages = new GetMessagesTask();
+		getMyMessages.execute(username, reciever);
+	}
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -78,13 +86,13 @@ public class ChatActivity extends Activity {
 					smt = new SendMessageTask();
 					smt.execute(username,reciever,messageText.getText().toString());
 					getMyMessages = new GetMessagesTask();
-					getMyMessages.execute(username);
+					getMyMessages.execute(username, reciever);
 				}
 			}
 		});
 		
-		myMessages = (ListView)findViewById(R.id.sendList);
-		recieverMessages = (ListView)findViewById(R.id.recieverList);
+		myMessages = (ListView)findViewById(R.id.recieverList);
+		recieverMessages = (ListView)findViewById(R.id.sendList);
 		
 		myAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1, myList);
 		recieverAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1, recieverList);
@@ -93,9 +101,9 @@ public class ChatActivity extends Activity {
 		recieverMessages.setAdapter(recieverAdapter);
 		
 		getMyMessages = new GetMessagesTask();
-		getMyMessages.execute(username);
+		getMyMessages.execute(username, reciever);
 		getRecieverMessages = new GetMessagesTask();
-		getRecieverMessages.execute(reciever);
+		getRecieverMessages.execute(reciever, username);
 		
 		this.instance = this;
 	}
@@ -194,6 +202,7 @@ public class ChatActivity extends Activity {
 
     	private ArrayList<String> messageList;
     	private String messageReciever;
+    	private String messageSender;
     	
     	@Override
 		protected String doInBackground(String... params) {
@@ -206,11 +215,12 @@ public class ChatActivity extends Activity {
 			byte[] json;
 			
 			messageReciever = params[0];
+			messageSender = params[1];
 			
 			String s = null;
 			new ArrayList<String>();
 			try {
-				url = new URL("http://ollejohanbackend.appspot.com/mh/getPMsForUser?username="+messageReciever);
+				url = new URL("http://ollejohanbackend.appspot.com/mh/getPMsForUserFromUser?username="+messageReciever+"&fromUser="+messageSender);
 				http = (HttpURLConnection)url.openConnection();
 				is = http.getInputStream();
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();				
