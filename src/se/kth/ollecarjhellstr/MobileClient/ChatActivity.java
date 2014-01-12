@@ -36,6 +36,8 @@ public class ChatActivity extends Activity {
 	
 	private Button sendButton;
 	
+	private static ChatActivity instance;
+	
 	private EditText messageText;
 	
 	private ListView myMessages;
@@ -47,10 +49,14 @@ public class ChatActivity extends Activity {
 	private ArrayAdapter<String> myAdapter;
 	private ArrayAdapter<String> recieverAdapter;
 
+	public static ChatActivity getInstance() {
+        return instance;
+     }
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
 		setContentView(R.layout.activity_chat);
 		
 		Bundle b = getIntent().getExtras();
@@ -67,9 +73,12 @@ public class ChatActivity extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				smt = new SendMessageTask();
+				
 				if(!("".equals(messageText.getText().toString()))){
+					smt = new SendMessageTask();
 					smt.execute(username,reciever,messageText.getText().toString());
+					getMyMessages = new GetMessagesTask();
+					getMyMessages.execute(username);
 				}
 			}
 		});
@@ -87,6 +96,8 @@ public class ChatActivity extends Activity {
 		getMyMessages.execute(username);
 		getRecieverMessages = new GetMessagesTask();
 		getRecieverMessages.execute(reciever);
+		
+		this.instance = this;
 	}
 
 	@Override

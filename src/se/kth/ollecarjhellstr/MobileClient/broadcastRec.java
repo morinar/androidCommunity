@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Vibrator;
 import android.util.Log;
 
 @SuppressLint("NewApi")
@@ -27,8 +28,17 @@ public class broadcastRec extends BroadcastReceiver {
 	    NotificationManager mNotificationManager =
 	        (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 	    mNotificationManager.notify(1, mBuilder.build());
-		
+	    
+	    Vibrator vib = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+	    vib.vibrate(1500);
+	    
 		Log.i("asdsda",""+arg1.getExtras().getString("username"));
+	
+		/*ChatActivity chat = ChatActivity.getInstance();
+		
+		if(chat != null){
+			chat.runOnUiThread(action)
+		}*/
 	}
 
 }
