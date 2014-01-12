@@ -7,15 +7,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONStringer;
+import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -62,7 +54,7 @@ public class MainActivity extends Activity {
 				}
 			}
 		});
-		
+
 		
 	}
 	
@@ -99,17 +91,18 @@ public class MainActivity extends Activity {
     	
 		@Override
 		protected String doInBackground(String... params) {
-
+			
 			HttpURLConnection http;
 			URL url = null;
 			InputStream is = null;
 			byte[] json;
 			String s = null;
+			ByteArrayOutputStream baos = null;
 			try {
 				url = new URL("http://ollejohanbackend.appspot.com/uh/login?username="+username.getText().toString()+"&password="+password.getText().toString());
 				http = (HttpURLConnection)url.openConnection();
 				is = http.getInputStream();
-				ByteArrayOutputStream baos = new ByteArrayOutputStream();				
+				baos = new ByteArrayOutputStream();				
 				json = new byte[8];
 				int read = 0;
 				if(this.isCancelled()){return null;}
@@ -119,15 +112,35 @@ public class MainActivity extends Activity {
 				}		
 				baos.flush();	
 				s = new String(baos.toByteArray());
-				Log.i("asd",""+s);
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 				return "Strange Error";
 			} catch (IOException e) {
 				e.printStackTrace();
 				return "Network Error";
-			} 
+			} finally{
+				try {
+					is.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+					return "Strange Error";
+				}
+			}
 			
+			if("true".equals(s)){
+				GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(getApplicationContext());
+				String regId = null;
+				try {
+					regId = gcm.register("27156684778");
+					url = new URL("http://ollejohanbackend.appspot.com/uh/registerTelephone?username="+username.getText().toString() + "&id="+regId);
+					http = (HttpURLConnection)url.openConnection();
+					http.getResponseMessage();
+				} catch (IOException e) {
+					e.printStackTrace();
+					return "Could not register cloudz";
+				}
+				Log.i("REG-ID",""+regId);
+			}
 			return s;
 
 		}

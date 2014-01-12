@@ -31,7 +31,8 @@ public class ChatActivity extends Activity {
 	private String reciever;
 	
 	private SendMessageTask smt;
-	private GetMessagesTask gct;
+	private GetMessagesTask getMyMessages;
+	private GetMessagesTask getRecieverMessages;
 	
 	private Button sendButton;
 	
@@ -46,7 +47,6 @@ public class ChatActivity extends Activity {
 	private ArrayAdapter<String> myAdapter;
 	private ArrayAdapter<String> recieverAdapter;
 
-
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +56,6 @@ public class ChatActivity extends Activity {
 		Bundle b = getIntent().getExtras();
 		username = b.getString("username");
 		reciever = b.getString("reciever");
-		doToast(""+username+" "+reciever);
 		
 		myList = new ArrayList<String>();
 		recieverList = new ArrayList<String>();
@@ -84,17 +83,20 @@ public class ChatActivity extends Activity {
 		myMessages.setAdapter(myAdapter);
 		recieverMessages.setAdapter(recieverAdapter);
 		
-		gct = new GetMessagesTask();
-		gct.execute(username);
-		gct = new GetMessagesTask();
-		gct.execute(reciever);
+		getMyMessages = new GetMessagesTask();
+		getMyMessages.execute(username);
+		getRecieverMessages = new GetMessagesTask();
+		getRecieverMessages.execute(reciever);
 	}
 
 	@Override
 	protected void onStop(){
 		super.onStop();
-		if(gct != null){
-			gct.cancel(true);
+		if(getMyMessages != null){
+			getMyMessages.cancel(true);
+		}
+		if(getRecieverMessages != null){
+			getRecieverMessages.cancel(true);
 		}
 		if(smt != null){
 			smt.cancel(true);
@@ -129,7 +131,6 @@ public class ChatActivity extends Activity {
 			String message = params[2];
 			
 			String s = null;
-			new ArrayList<String>();
 			try {
 				url = new URL("http://ollejohanbackend.appspot.com/mh/sendPrivateMessage?fromUser="+ myUsername +"&toUser="+ recieverUsername +"&message="+ message +"");
 				http = (HttpURLConnection)url.openConnection();
@@ -151,6 +152,13 @@ public class ChatActivity extends Activity {
 			} catch (IOException e) {
 				e.printStackTrace();
 				return "Network Error";
+			} finally{
+				try {
+					is.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+					return "Strange Error";
+				}
 			}
 			if(this.isCancelled()){return null;}
 			
@@ -211,6 +219,13 @@ public class ChatActivity extends Activity {
 			} catch (IOException e) {
 				e.printStackTrace();
 				return "Network Error";
+			} finally{
+				try {
+					is.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+					return "Strange Error";
+				}
 			}
 			if(this.isCancelled()){return null;}
 			
@@ -229,7 +244,6 @@ public class ChatActivity extends Activity {
 				e.printStackTrace();
 				return "Back-end Error";
 			}
-			
 			return "Downloaded Messages";
 
 		}
@@ -240,14 +254,14 @@ public class ChatActivity extends Activity {
 				myList.clear();
 				myList.addAll(messageList);
 				myAdapter.notifyDataSetChanged();
-				doToast("myUser");
+				//doToast("myUser");
 			} else {
 				recieverList.clear();
 				recieverList.addAll(messageList);
 				recieverAdapter.notifyDataSetChanged();
 			}
 
-			//doToast(result);
+			doToast(result);
 		}
     	
     }
