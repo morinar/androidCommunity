@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import org.json.JSONArray;
@@ -26,6 +27,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -60,6 +62,8 @@ public class ChatActivity extends Activity {
 	private LocationManager lm;
 	private LocListener GPSListener;
 	private LocListener NETListener;
+	
+	private CheckBox useGPS;
 
 	public static ChatActivity getInstance() {
 		if(instance.hasWindowFocus()){
@@ -83,6 +87,7 @@ public class ChatActivity extends Activity {
 		GPSListener = new LocListener();
 		NETListener = new LocListener();
 		
+		useGPS = (CheckBox)findViewById(R.id.checkBox1);
 		lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 0, GPSListener);
 		lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 0, NETListener);
 		
@@ -140,14 +145,14 @@ public class ChatActivity extends Activity {
 					Log.d("PLAY SERVICES", "Error: " + playenabled);
 				}
 				
-				/*
-				if(!("".equals(messageText.getText().toString()))){
+				
+				/*if(!("".equals(messageText.getText().toString()))){
 					smt = new SendMessageTask();
 					smt.execute(username,reciever,messageText.getText().toString());
 					getMyMessages = new GetMessagesTask();
 					getMyMessages.execute(username, reciever);
-				}
-				*/
+				}*/
+				
 			}
 		});
 		
@@ -215,7 +220,8 @@ public class ChatActivity extends Activity {
 			
 			String s = null;
 			try {
-				url = new URL("http://ollejohanbackend.appspot.com/mh/sendPrivateMessage?fromUser="+ myUsername +"&toUser="+ recieverUsername +"&message="+ message +"");
+				url = new URL("http://ollejohanbackend.appspot.com/mh/sendPrivateMessage?fromUser="+ myUsername +"&toUser="+ recieverUsername +"&message="+ URLEncoder.encode(message,"UTF-8") +"");
+				
 				http = (HttpURLConnection)url.openConnection();
 				is = http.getInputStream();
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();				
