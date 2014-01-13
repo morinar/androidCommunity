@@ -217,10 +217,10 @@ containing a value of this type.
         public static final int none=0x7f050000;
         public static final int normal=0x7f050001;
         public static final int password=0x7f05000d;
-        public static final int recieverList=0x7f050008;
+        public static final int recieverList=0x7f050007;
         public static final int satellite=0x7f050002;
         public static final int sendButton=0x7f05000b;
-        public static final int sendList=0x7f050007;
+        public static final int sendList=0x7f050008;
         public static final int terrain=0x7f050003;
         public static final int textWriteId=0x7f050009;
         public static final int updateButton=0x7f050010;

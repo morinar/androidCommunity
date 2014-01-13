@@ -12,9 +12,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.app.Activity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -24,6 +29,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 
 public class ChatActivity extends Activity {
 
@@ -48,16 +56,35 @@ public class ChatActivity extends Activity {
 	
 	private ArrayAdapter<String> myAdapter;
 	private ArrayAdapter<String> recieverAdapter;
+	
+	private LocationManager lm;
+	private LocListener GPSListener;
+	private LocListener NETListener;
 
 	public static ChatActivity getInstance() {
-        return instance;
+		if(instance.hasWindowFocus()){
+			return instance;
+		}
+		return null;
      }
+	
+	public void updateMessages(){
+		getMyMessages = new GetMessagesTask();
+		getMyMessages.execute(username, reciever);
+	}
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
 		setContentView(R.layout.activity_chat);
+		
+		lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+		GPSListener = new LocListener();
+		NETListener = new LocListener();
+		
+		lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 0, GPSListener);
+		lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 0, NETListener);
 		
 		Bundle b = getIntent().getExtras();
 		username = b.getString("username");
@@ -72,19 +99,60 @@ public class ChatActivity extends Activity {
 		sendButton.setOnClickListener(new OnClickListener() {
 			
 			@Override
-			public void onClick(View v) {
+			public void onClick(View v) {		
+				int playenabled = GooglePlayServicesUtil.isGooglePlayServicesAvailable(instance);
+				if(playenabled == ConnectionResult.SUCCESS){
+					//Play services are enabled on this device, we may try to use location services now.
+					//Log.d("PLAY SERVICES", "We in.");
+					
+					if(lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
+						//NETWORK locations are enabled, use them
+						Log.d("GPS SERVICES", "We in NETWORK.");
+						Location latestLoc = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+						if(latestLoc != null){
+							String loc = "Lat: " + latestLoc.getLatitude() + " Lon: " + latestLoc.getLongitude();
+							doToast("NETWORK: " + loc);
+						}
+						else{
+							doToast("NETWORK: " + "No location data availible yet.");
+						}
+					}//End of Network provider
+					else if(lm.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+					    //GPS is enabled, use it
+						Log.d("GPS SERVICES", "We in GPS.");
+						Location latestLoc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+						if(latestLoc != null){
+							String loc = "Lat: " + latestLoc.getLatitude() + " Lon: " + latestLoc.getLongitude();
+							doToast("GPS: " + loc);
+						}
+						else{
+							doToast("GPS: " + "No location data availible yet.");
+						}
+					}//End of GPS provider
+					else{
+				        //GPS or NETWORK is not enabled, ask user if they want to enable it here
+				    	Log.d("GPS SERVICES", "We out.");
+				    	Intent gpsOptionsIntent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);  
+				    	startActivity(gpsOptionsIntent);
+				    }
+				}//End of playenabled
+				else{
+					Log.d("PLAY SERVICES", "Error: " + playenabled);
+				}
 				
+				/*
 				if(!("".equals(messageText.getText().toString()))){
 					smt = new SendMessageTask();
 					smt.execute(username,reciever,messageText.getText().toString());
 					getMyMessages = new GetMessagesTask();
-					getMyMessages.execute(username);
+					getMyMessages.execute(username, reciever);
 				}
+				*/
 			}
 		});
 		
-		myMessages = (ListView)findViewById(R.id.sendList);
-		recieverMessages = (ListView)findViewById(R.id.recieverList);
+		myMessages = (ListView)findViewById(R.id.recieverList);
+		recieverMessages = (ListView)findViewById(R.id.sendList);
 		
 		myAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1, myList);
 		recieverAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1, recieverList);
@@ -93,9 +161,9 @@ public class ChatActivity extends Activity {
 		recieverMessages.setAdapter(recieverAdapter);
 		
 		getMyMessages = new GetMessagesTask();
-		getMyMessages.execute(username);
+		getMyMessages.execute(username, reciever);
 		getRecieverMessages = new GetMessagesTask();
-		getRecieverMessages.execute(reciever);
+		getRecieverMessages.execute(reciever, username);
 		
 		this.instance = this;
 	}
@@ -111,6 +179,10 @@ public class ChatActivity extends Activity {
 		}
 		if(smt != null){
 			smt.cancel(true);
+		}
+		if(lm != null){
+			lm.removeUpdates(GPSListener);
+			lm.removeUpdates(NETListener);
 		}
 	}
 	
@@ -194,6 +266,7 @@ public class ChatActivity extends Activity {
 
     	private ArrayList<String> messageList;
     	private String messageReciever;
+    	private String messageSender;
     	
     	@Override
 		protected String doInBackground(String... params) {
@@ -206,11 +279,12 @@ public class ChatActivity extends Activity {
 			byte[] json;
 			
 			messageReciever = params[0];
+			messageSender = params[1];
 			
 			String s = null;
 			new ArrayList<String>();
 			try {
-				url = new URL("http://ollejohanbackend.appspot.com/mh/getPMsForUser?username="+messageReciever);
+				url = new URL("http://ollejohanbackend.appspot.com/mh/getPMsForUserFromUser?username="+messageReciever+"&fromUser="+messageSender);
 				http = (HttpURLConnection)url.openConnection();
 				is = http.getInputStream();
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();				
@@ -276,5 +350,34 @@ public class ChatActivity extends Activity {
 		}
     	
     }
+    
+	private class LocListener implements LocationListener{
+		@Override
+		public void onLocationChanged(Location loc){
+			loc.getLatitude();
+			loc.getLongitude();
+			
+			//String Text = "My current location is: " + 
+			//"Latitud = " + loc.getLatitude() +
+			//"Longitud = " + loc.getLongitude();
+			//Toast.makeText(getApplicationContext(), Text, Toast.LENGTH_SHORT).show();
+			//Log.d("GPS SERVICE", "Lat: " + loc.getLatitude() + " Lon: " + loc.getLongitude());
+		}
+
+		@Override
+		public void onProviderDisabled(String provider){
+			Toast.makeText( getApplicationContext(), "Gps Disabled", Toast.LENGTH_SHORT ).show();
+		}
+
+		@Override
+		public void onProviderEnabled(String provider){
+			Toast.makeText(getApplicationContext(), "Gps Enabled", Toast.LENGTH_SHORT).show();
+		}
+
+		@Override
+		public void onStatusChanged(String provider, int status, Bundle extras){
+
+		}
+	}
 
 }
