@@ -66,8 +66,10 @@ public class ChatActivity extends Activity {
 	private CheckBox useGPS;
 
 	public static ChatActivity getInstance() {
-		if(instance.hasWindowFocus()){
-			return instance;
+		if(instance != null){
+			if(instance.hasWindowFocus()){
+				return instance;
+			}
 		}
 		return null;
      }
