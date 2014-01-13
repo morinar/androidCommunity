@@ -8,6 +8,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -16,6 +18,8 @@ import org.json.JSONObject;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -85,11 +89,11 @@ public class ChatActivity extends Activity {
 		
 		setContentView(R.layout.activity_chat);
 		
+		//Locationstuff
 		lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
 		GPSListener = new LocListener();
 		NETListener = new LocListener();
 		
-		useGPS = (CheckBox)findViewById(R.id.checkBox1);
 		lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 0, GPSListener);
 		lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 0, NETListener);
 		
@@ -100,61 +104,105 @@ public class ChatActivity extends Activity {
 		myList = new ArrayList<String>();
 		recieverList = new ArrayList<String>();
 		
+		useGPS = (CheckBox)findViewById(R.id.checkBox1);
+		
 		messageText = (EditText)findViewById(R.id.textWriteId);
 		
 		sendButton = (Button)findViewById(R.id.sendButton);
 		sendButton.setOnClickListener(new OnClickListener() {
 			
 			@Override
-			public void onClick(View v) {		
-				int playenabled = GooglePlayServicesUtil.isGooglePlayServicesAvailable(instance);
-				if(playenabled == ConnectionResult.SUCCESS){
-					//Play services are enabled on this device, we may try to use location services now.
-					//Log.d("PLAY SERVICES", "We in.");
-					
-					if(lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
-						//NETWORK locations are enabled, use them
-						Log.d("GPS SERVICES", "We in NETWORK.");
-						Location latestLoc = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-						if(latestLoc != null){
-							String loc = "Lat: " + latestLoc.getLatitude() + " Lon: " + latestLoc.getLongitude();
-							doToast("NETWORK: " + loc);
-						}
+			public void onClick(View v) {	
+				
+				if(useGPS.isChecked()){
+					Log.d("COORDS", "YES");
+					int playenabled = GooglePlayServicesUtil.isGooglePlayServicesAvailable(instance);
+					if(playenabled == ConnectionResult.SUCCESS){
+						//Play services are enabled on this device, we may try to use location services now.
+						//Log.d("PLAY SERVICES", "We in.");
+						
+						if(lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
+							//NETWORK locations are enabled, use them
+							Log.d("LOCATION SERVICES", "We in NETWORK.");
+							Location latestLoc = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+							
+							if(latestLoc != null){						
+								//Get the area from which the message sent.
+								Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());                 
+								try {
+								    List<Address> listAddresses = geocoder.getFromLocation(latestLoc.getLatitude(), latestLoc.getLongitude(), 1);
+								    if(null!=listAddresses&&listAddresses.size()>0){
+								    	Log.d("ADRESS: ", listAddresses.get(0).toString());
+								        String locality = listAddresses.get(0).getLocality();
+								        //doToast("Location: " + test);
+										//Send the message finally.
+								        if(!("".equals(messageText.getText().toString()))){
+											smt = new SendMessageTask();
+											smt.execute(username,reciever,messageText.getText().toString() + " - Near " + locality);
+											getMyMessages = new GetMessagesTask();
+											getMyMessages.execute(username, reciever);
+										}
+								    }
+								} catch (IOException e) {
+								    e.printStackTrace();
+								}
+							}//End no latest loc for network
+							else{
+								doToast("NETWORK: " + "No location data availible yet.");
+							}
+						}//End of Network provider
+						else if(lm.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+						    //GPS is enabled, use it
+							Log.d("LOCATION SERVICES", "We in GPS.");
+							Location latestLoc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+							if(latestLoc != null){						
+								//Get the area from which the message sent.
+								Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());                 
+								try {
+								    List<Address> listAddresses = geocoder.getFromLocation(latestLoc.getLatitude(), latestLoc.getLongitude(), 1);
+								    if(null!=listAddresses&&listAddresses.size()>0){
+								    	Log.d("ADRESS: ", listAddresses.get(0).toString());
+								        String locality = listAddresses.get(0).getLocality();
+								        //doToast("Location: " + test);
+										//Send the message finally.
+								        if(!("".equals(messageText.getText().toString()))){
+											smt = new SendMessageTask();
+											smt.execute(username,reciever,messageText.getText().toString() + " - Near " + locality);
+											getMyMessages = new GetMessagesTask();
+											getMyMessages.execute(username, reciever);
+										}
+								    }
+								} catch (IOException e) {
+								    e.printStackTrace();
+								}
+							}
+							else{
+								doToast("GPS: " + "No location data availible yet.");
+							}
+						}//End of GPS provider
 						else{
-							doToast("NETWORK: " + "No location data availible yet.");
-						}
-					}//End of Network provider
-					else if(lm.isProviderEnabled(LocationManager.GPS_PROVIDER)){
-					    //GPS is enabled, use it
-						Log.d("GPS SERVICES", "We in GPS.");
-						Location latestLoc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-						if(latestLoc != null){
-							String loc = "Lat: " + latestLoc.getLatitude() + " Lon: " + latestLoc.getLongitude();
-							doToast("GPS: " + loc);
-						}
-						else{
-							doToast("GPS: " + "No location data availible yet.");
-						}
-					}//End of GPS provider
+					        //GPS or NETWORK is not enabled, ask user if they want to enable it here
+					    	Log.d("GPS SERVICES", "We out.");
+					    	doToast("Please enable any location service to send location.");
+					    	Intent gpsOptionsIntent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);  
+					    	startActivity(gpsOptionsIntent);
+					    }
+					}//End of play enabled
 					else{
-				        //GPS or NETWORK is not enabled, ask user if they want to enable it here
-				    	Log.d("GPS SERVICES", "We out.");
-				    	Intent gpsOptionsIntent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);  
-				    	startActivity(gpsOptionsIntent);
-				    }
-				}//End of playenabled
+						Log.d("PLAY SERVICES", "Error: " + playenabled);
+					}
+				}//End of GPS checkbox checked
 				else{
-					Log.d("PLAY SERVICES", "Error: " + playenabled);
-				}
-				
-				
-				/*if(!("".equals(messageText.getText().toString()))){
-					smt = new SendMessageTask();
-					smt.execute(username,reciever,messageText.getText().toString());
-					getMyMessages = new GetMessagesTask();
-					getMyMessages.execute(username, reciever);
-				}*/
-				
+					//doToast("You do not want to send cords");
+					Log.d("COORDS", "NO");
+					if(!("".equals(messageText.getText().toString()))){
+						smt = new SendMessageTask();
+						smt.execute(username,reciever,messageText.getText().toString());
+						getMyMessages = new GetMessagesTask();
+						getMyMessages.execute(username, reciever);
+					}
+				}				
 			}
 		});
 		
@@ -174,7 +222,7 @@ public class ChatActivity extends Activity {
 		
 		this.instance = this;
 	}
-
+	
 	@Override
 	protected void onStop(){
 		super.onStop();
