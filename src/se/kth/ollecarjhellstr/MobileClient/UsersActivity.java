@@ -12,9 +12,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.google.android.gms.gcm.GoogleCloudMessaging;
+
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.util.Log;
 import android.view.Menu;
@@ -50,6 +53,7 @@ public class UsersActivity extends Activity {
 			}
 		});
 		
+
 		userList = (ListView)findViewById(R.id.userList);
 		
 		users = new ArrayList<String>();
@@ -130,7 +134,16 @@ public class UsersActivity extends Activity {
 			} catch (IOException e) {
 				e.printStackTrace();
 				return "Network Error";
+			} finally{
+				try {
+					is.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+					return "Strange Error";
+				}
 			}
+			
+			
 			if(this.isCancelled()){return null;}
 			JSONObject jsob = null;
 			JSONArray jsarray = null;
