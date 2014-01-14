@@ -33,16 +33,26 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.HorizontalScrollView;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 
+/**
+ * 
+ * ChatActivity, the place where you chat with a friend
+ * 
+ * @author Olle Carlquist 
+ * @author Johan Hellström
+ *
+ */
+
 public class ChatActivity extends Activity {
 
-	private String username;
-	private String reciever;
+	protected String username;
+	protected String reciever;
 	
 	private SendMessageTask smt;
 	private GetMessagesTask getMyMessages;
@@ -69,9 +79,12 @@ public class ChatActivity extends Activity {
 	
 	private CheckBox useGPS;
 
-	public static ChatActivity getInstance() {
+	public static ChatActivity getInstance(boolean checkIfFocus) {
 		if(instance != null){
-			if(instance.hasWindowFocus()){
+			if(instance.hasWindowFocus() && checkIfFocus){
+				return instance;
+			}
+			else if(!checkIfFocus){
 				return instance;
 			}
 		}
@@ -79,6 +92,9 @@ public class ChatActivity extends Activity {
      }
 	
 	public void updateMessages(){
+		if(getMyMessages != null){
+			getMyMessages.cancel(true);
+		}
 		getMyMessages = new GetMessagesTask();
 		getMyMessages.execute(username, reciever);
 	}
@@ -199,8 +215,6 @@ public class ChatActivity extends Activity {
 					if(!("".equals(messageText.getText().toString()))){
 						smt = new SendMessageTask();
 						smt.execute(username,reciever,messageText.getText().toString());
-						getMyMessages = new GetMessagesTask();
-						getMyMessages.execute(username, reciever);
 					}
 				}				
 			}
@@ -309,6 +323,9 @@ public class ChatActivity extends Activity {
 		protected void onPostExecute(String result) {
 			if("true".equals(result)){
 				doToast("Message Sent");
+				getRecieverMessages.cancel(true);
+				getRecieverMessages = new GetMessagesTask();
+				getRecieverMessages.execute(reciever,username);
 			} else if("false".equals(result)){
 				doToast("Message not sent");
 			} else{
@@ -395,13 +412,16 @@ public class ChatActivity extends Activity {
 				myList.clear();
 				myList.addAll(messageList);
 				myAdapter.notifyDataSetChanged();
+				myMessages.setSelection(myAdapter.getCount()-1);
+				
 				//doToast("myUser");
 			} else {
 				recieverList.clear();
 				recieverList.addAll(messageList);
 				recieverAdapter.notifyDataSetChanged();
+				recieverMessages.setSelection(recieverAdapter.getCount()-1);
 			}
-
+			
 			doToast(result);
 		}
     	

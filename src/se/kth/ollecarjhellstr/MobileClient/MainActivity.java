@@ -6,9 +6,11 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
@@ -21,7 +23,14 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
-
+/**
+ * 
+ * MainActivity, only a login-screen
+ * 
+ * @author Olle Carlquist 
+ * @author Johan Hellström
+ *
+ */
 
 public class MainActivity extends Activity {
 
@@ -48,9 +57,14 @@ public class MainActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				if(!("".equals(username.getText().toString())) && !("".equals(password.getText().toString()))){
-					Log.i("asdasd",""+"dododobo");
-					lt = new LoginTask();
-					lt.execute(username.getText().toString(),password.getText().toString());
+					ConnectivityManager cm = (ConnectivityManager)getApplicationContext().getSystemService(CONNECTIVITY_SERVICE);
+					if(cm.getActiveNetworkInfo() != null){
+						Log.i("asdasd",""+"dododobo");
+						lt = new LoginTask();
+						lt.execute(username.getText().toString(),password.getText().toString());
+					} else{
+						doToast("No Internet Connection");
+					}
 				}
 			}
 		});
@@ -87,7 +101,9 @@ public class MainActivity extends Activity {
     
     private class LoginTask extends AsyncTask<String, Void, String>{
 
-    	
+    	/**
+    	 * LoginTask, needs username and password to execute properly.
+    	 */
     	
 		@Override
 		protected String doInBackground(String... params) {
@@ -96,10 +112,12 @@ public class MainActivity extends Activity {
 			URL url = null;
 			InputStream is = null;
 			byte[] json;
+			String loginName = params[0];
+			String pass = params[1];
 			String s = null;
 			ByteArrayOutputStream baos = null;
 			try {
-				url = new URL("http://ollejohanbackend.appspot.com/uh/login?username="+username.getText().toString()+"&password="+password.getText().toString());
+				url = new URL("http://ollejohanbackend.appspot.com/uh/login?username="+loginName+"&password="+pass);
 				http = (HttpURLConnection)url.openConnection();
 				is = http.getInputStream();
 				baos = new ByteArrayOutputStream();				

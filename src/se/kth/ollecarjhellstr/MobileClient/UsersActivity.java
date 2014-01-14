@@ -25,6 +25,15 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
+/**
+ * 
+ * UsersActivity, a list of all the users that you can chat with
+ * 
+ * @author Olle Carlquist 
+ * @author Johan Hellström
+ *
+ */
+
 public class UsersActivity extends Activity {
 
 	private Button updateButton;
@@ -45,6 +54,7 @@ public class UsersActivity extends Activity {
 		updateButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View arg0) {
+				if(gut != null){ gut.cancel(true);}
 				gut = new GetUsersTask();
 				gut.execute(username);
 			}
